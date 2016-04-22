@@ -4,8 +4,6 @@
 
 require 'require_all'
 
-require_rel 'helpers.rb'
-
 module API; end
 
 # Type validators
@@ -100,17 +98,23 @@ class API::VolumeDriver < Grape::API
   rescue_from Blockbridge::NotFound do |e|
     env.logger.info e.message.chomp.squeeze("\n")
     error!({ Err: e.message }, 400)
-  end    
+  end
 
   rescue_from Blockbridge::CommandError do |e|
-    env.logger.info e.message.chomp.squeeze("\n")
+    msg = e.message.chomp.squeeze("\n")
+    msg.each_line do |m| env.logger.error(m.chomp) end
+    e.backtrace.each do |b| env.logger.error(b) end
     error!({ Err: e.message }, 400)
-  end    
+  end
 
   rescue_from Blockbridge::ResourcesUnavailable do |e|
     env.logger.info e.message.chomp.squeeze("\n")
     error!({ Err: e.message }, 400)
-  end    
+  end
+
+  rescue_from Blockbridge::VolumeInuse do |e|
+    error!({ Err: e.message }, 400)
+  end
 
   rescue_from :all do |e|
     msg = e.message.chomp.squeeze("\n")

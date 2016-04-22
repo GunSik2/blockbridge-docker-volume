@@ -18,12 +18,15 @@ module Helpers
   include Helpers::Params
   include Helpers::Volume
   include Helpers::Profile
-  include Helpers::Docker
+  include Helpers::DockerApi
+  include Helpers::BlockbridgeApi
   include Helpers::Iscsid
   include Helpers::Sync
   include Helpers::Cmd
   include Helpers::Defs
   include Helpers::Refs
+  include Helpers::Cache
+  include EventMachine::Synchrony
 
   def logger
     env.logger

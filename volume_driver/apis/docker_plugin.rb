@@ -44,6 +44,7 @@ class API::DockerPlugin < Grape::API
         body(Err: nil)
         volume_check_params
         volume_create
+        vol_cache_add
       end
     end
   end
@@ -59,7 +60,7 @@ class API::DockerPlugin < Grape::API
     post do
       synchronize do
         body(Err: nil)
-        volume_remove
+        volume_remove(async: true)
       end
     end
   end
@@ -76,6 +77,7 @@ class API::DockerPlugin < Grape::API
       synchronize do
         body(Mountpoint: mnt_path, Err: nil)
         volume_mount
+        vol_cache_add
       end
     end
   end
@@ -86,7 +88,8 @@ class API::DockerPlugin < Grape::API
       requires :Name, type: String, desc: "Volume Name"
     end
     post do
-      body(Mountpoint: mnt_path, Err: nil)
+      body(Mountpoint: mnt_path_map, Err: nil)
+      vol_cache_add
     end
   end
 
@@ -99,6 +102,7 @@ class API::DockerPlugin < Grape::API
       synchronize do
         body(Err: nil)
         volume_unmount
+        vol_cache_add
       end
     end
   end
@@ -110,6 +114,7 @@ class API::DockerPlugin < Grape::API
     end
     post do
       body(Volume: volume_get, Err: nil)
+      vol_cache_add
     end
   end
 
