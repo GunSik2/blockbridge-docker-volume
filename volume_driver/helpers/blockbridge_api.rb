@@ -10,23 +10,30 @@ module Helpers
       @@bbapi_client ||= {}
     end
 
-    def bbapi_client_handle(user)
-      "#{access_token}:#{user}"
+    def bbapi_client_handle(user, user_token)
+      "#{access_token(user_token)}:#{user}"
     end
 
-    def access_token
-      @access_token ||= api_token
+    def access_token(user_token)
+      if user_token
+        user_token
+      else
+        system_access_token
+      end
     end
 
     def url
-      "https://#{api_host}/api" if api_host
-      api_url if api_url
+      if api_host
+        "https://#{api_host}/api"
+      elsif api_url
+        api_url
+      end
     end
 
-    def client_params(user)
+    def client_params(user, user_token)
       Hash.new.tap do |p|
         p[:user] = user || ''
-        if user
+        if user && user_token.nil?
           p[:default_headers] = {
             'X-Blockbridge-SU' => user,
           }
@@ -35,31 +42,32 @@ module Helpers
       end
     end
 
-    def bbapi(user = nil)
-      BlockbridgeApi.bbapi_client[bbapi_client_handle(user)] ||=
+    def bbapi(user = nil, user_token = nil)
+      BlockbridgeApi.bbapi_client[bbapi_client_handle(user, user_token)] ||=
         begin
           Blockbridge::Api::Client.defaults[:ssl_verify_peer] = false
-          Blockbridge::Api::Client.new_oauth(access_token, client_params(user))
+          Blockbridge::Api::Client.new_oauth(access_token(user_token),
+                                             client_params(user, user_token))
         end
     end
 
-    def bb_lookup(user, vol_name)
-      vols = bbapi(user).vdisk.list(label: vol_name)
+    def bb_lookup(vol_name, user, user_token = nil)
+      vols = bbapi(user, user_token).vdisk.list(label: vol_name)
       raise Blockbridge::NotFound if vols.empty?
       vols.first
     end
 
-    def bb_remove(user, vol_name)
-      disk = bb_lookup(user, vol_name)
-      bbapi(user).objects.remove_by_xref("#{volume_ref_prefix}#{vol_name}", scope: "vdisk,xmd")
-      if bbapi(user).vdisk.list(vss_id: disk.vss_id).empty?
-        bbapi(user).vss.remove(disk.vss_id)
+    def bb_remove(vol_name, user, user_token = nil)
+      disk = bb_lookup(user, user_token, vol_name)
+      bbapi(user, user_token).objects.remove_by_xref("#{volume_ref_prefix}#{vol_name}", scope: "vdisk,xmd")
+      if bbapi(user, user_token).vdisk.list(vss_id: disk.vss_id).empty?
+        bbapi(user, user_token).vss.remove(disk.vss_id)
       end
     rescue Blockbridge::NotFound
     end
 
-    def bb_is_attached(user, vol_name)
-      disk = bb_lookup(user, vol_name)
+    def bb_is_attached(vol_name, user, user_token = nil)
+      disk = bb_lookup(vol_name, user, user_token)
       disk.xmd_refs.any? { |x| x.start_with? "host-attach" }
     rescue Blockbridge::NotFound
     end
