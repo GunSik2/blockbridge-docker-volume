@@ -50,9 +50,10 @@ module Blockbridge
       raise Blockbridge::Notfound if bbapi.user_profile.list(login: user).length == 0
     end
 
-    def volume_lookup(vol)
+    def volume_lookup_info(vol)
       volume_user_lookup(vol[:user])
-      bbapi(vol[:user]).xmd.info("docker-volume-#{vol[:name]}")
+      info = bbapi.xmd.info("docker-volume-#{vol[:name]}")
+      info[:data].merge(info[:data][:volume])
     rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound
     end
 
@@ -71,10 +72,10 @@ module Blockbridge
 
     def volume_async_remove(vol, vol_info, vol_env)
       if vol_info
-        return unless vol_info[:data] && vol_info[:data][:deleted]
-        return unless ((Time.now.tv_sec - vol_info[:data][:deleted]) > monitor_interval_s)
-        raise Blockbridge::VolumeInuse if bb_is_attached(vol[:user], vol[:name])
-        bb_remove(vol[:user], vol[:name])
+        return unless vol_info[:deleted]
+        return unless ((Time.now.tv_sec - vol_info[:deleted]) > monitor_interval_s)
+        raise Blockbridge::VolumeInuse if bb_is_attached(vol[:name], vol[:user], vol_info[:scope_token])
+        bb_remove(vol[:name], vol[:user], vol_info[:scope_token])
       end
       vol_cache_rm(vol[:name])
       logger.info "#{vol[:name]} async removed"
@@ -96,7 +97,7 @@ module Blockbridge
       logger.info "Validating volume cache"
       revalidate = false
       vol_cache_foreach do |v, vol|
-        volume_invalidate(vol[:name]) unless (vol_info = volume_lookup(vol))
+        volume_invalidate(vol[:name]) unless (vol_info = volume_lookup_info(vol))
         revalidate = true if vol[:deleted]
         volume_async_remove(vol, vol_info, vol[:env]) if vol[:deleted]
       end

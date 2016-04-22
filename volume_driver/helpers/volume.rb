@@ -163,12 +163,14 @@ module Helpers
       xmd[:tags].select { |t| t.include? 'docker-host' }.map { |t| t.gsub('docker-host:', '') }.join(',')
     end
 
-    def volume_info_map(info)
+    def volume_info_map(info, raw = false)
       info.map do |xmd|
         v = xmd[:data][:volume]
-        v[:hosts] = volume_hosts(xmd) if volume_hosts(xmd).length > 0
-        v[:deleted] = xmd[:data][:deleted] if xmd[:data][:deleted]
-        v.delete(:scope_token)
+        unless raw
+          v[:hosts] = volume_hosts(xmd) if volume_hosts(xmd).length > 0
+          v[:deleted] = xmd[:data][:deleted] if xmd[:data][:deleted]
+          v.delete(:scope_token)
+        end
         v
       end
     end
@@ -179,7 +181,7 @@ module Helpers
       name
     end
 
-    def volume_info
+    def volume_info(raw = false)
       if vol_name.nil?
         select = "|d| d[:ref].include?(\"#{volume_ref_prefix}\")"
       else
@@ -187,10 +189,10 @@ module Helpers
       end
       cmd = "bb -k xmd info --process 'puts MultiJson.dump(data.select { #{select} })'"
       info = profile_cmd_exec(cmd)
-      volume_info_map(info)
+      volume_info_map(info, raw)
     end
 
-    def volume_lookup
+    def volume_lookup(raw = false)
       info = volume_info
       raise Blockbridge::NotFound, "No volume named #{vol_name} found" if info.length == 0
       info
@@ -202,8 +204,8 @@ module Helpers
       []
     end
 
-    def volume_lookup_one
-      volume_lookup.first
+    def volume_lookup_one(raw = false)
+      volume_lookup(raw).first
     end
 
     def mnt_path_map(name = nil)
@@ -320,7 +322,7 @@ module Helpers
     end
 
     def volume_scope_token
-      volume = volume_info.first
+      volume = volume_info(true).first
       return volume[:scope_token]
     end
 
@@ -329,7 +331,7 @@ module Helpers
         mode: 'patch',
         data: [ { op: 'add', path: '/deleted', value: Time.now.tv_sec } ]
       }
-      bbapi(volume_user).xmd.update(volume_ref_name, params)
+      bbapi(volume_user, volume_scope_token).xmd.update(volume_ref_name, params)
       vol_cache_add(vol_name, volume_params.merge({deleted: true, env: volume_env}), true)
     end
 

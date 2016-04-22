@@ -58,7 +58,7 @@ module Helpers
     end
 
     def bb_remove(vol_name, user, user_token = nil)
-      disk = bb_lookup(user, user_token, vol_name)
+      disk = bb_lookup(vol_name, user, user_token)
       bbapi(user, user_token).objects.remove_by_xref("#{volume_ref_prefix}#{vol_name}", scope: "vdisk,xmd")
       if bbapi(user, user_token).vdisk.list(vss_id: disk.vss_id).empty?
         bbapi(user, user_token).vss.remove(disk.vss_id)
