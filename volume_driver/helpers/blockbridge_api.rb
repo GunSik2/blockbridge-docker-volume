@@ -66,10 +66,21 @@ module Helpers
     rescue Blockbridge::NotFound
     end
 
+    def bb_host_attached(ref, user, user_token = nil)
+      bbapi(user, user_token).xmd.info(ref)
+    rescue Excon::Errors::NotFound
+    end
+
     def bb_is_attached(vol_name, user, user_token = nil)
       disk = bb_lookup(vol_name, user, user_token)
-      disk.xmd_refs.any? { |x| x.start_with? "host-attach" }
+      attached = disk.xmd_refs.select { |x| x.start_with? "host-attach" }
+      return unless attached.length > 0
+      attached.map! { |ref|
+        bb_host_attached(ref, user, user_token)
+      }.compact!
+      return true if attached.length > 0
     rescue Blockbridge::NotFound
+    rescue Excon::Errors::NotFound
     end
   end
 end
