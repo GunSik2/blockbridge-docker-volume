@@ -31,6 +31,7 @@ module Helpers
         end
       @volume_env["BLOCKBRIDGE_API_KEY"] = volume_access_token
       @volume_env["BLOCKBRIDGE_API_SU"]  = volume_su_user
+      @volume_env["BLOCKBRIDGE_HOST_TRANSPORT"] = "--#{volume_params[:transport].downcase}" if volume_params[:transport]
       @volume_env.reject { |k, v| v.nil? }
     end
 
@@ -49,6 +50,7 @@ module Helpers
         :type,
         :user,
         :access_token,
+        :transport,
         :capacity,
         :attributes,
         :iops,
@@ -193,7 +195,7 @@ module Helpers
     end
 
     def volume_lookup(raw = false)
-      info = volume_info
+      info = volume_info(raw)
       raise Blockbridge::NotFound, "No volume named #{vol_name} found" if info.length == 0
       info
     end

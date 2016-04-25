@@ -151,6 +151,9 @@ class CreateCommand < Command
   option '--access-token', 'TOKEN', 'API access token for user authentication'
   option '--capacity', 'CAPACITY', 'request volume capacity (bytes, N GiB, etc.)'
   option '--iops', 'IOPS', 'requested service IOPS'
+  option '--transport', 'TRANSPORT', 'requested transport (tls, insecure, etc.)' do |val|
+    enum_check(val, %w(tls insecure))
+  end
   option '--clone-basis', 'CLONE-BASIS', '(autoclone) clone basis disk'
   option '--snapshot-tag', 'SNAPSHOT-TAG', '(autoclone) clone basis disk snapshot tag'
   option '--snapshot-interval-hours', 'SNAPSHOT-INTERVAL-HOURS', '(snappy) take snapshot every interval'
@@ -168,6 +171,7 @@ class CreateCommand < Command
       h[:access_token] = access_token
       h[:capacity]     = capacity
       h[:iops]         = iops
+      h[:transport]    = transport
       h[:attributes]   = attributes.join(' ') if attributes.length > 0
       h[:clone_basis]  = clone_basis
       h[:snapshot_tag] = snapshot_tag

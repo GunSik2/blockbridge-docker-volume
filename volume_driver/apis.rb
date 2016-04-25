@@ -82,6 +82,16 @@ class VolumeType < Grape::Validations::Base
   end
 end
 
+class TransportType < Grape::Validations::Base
+  def validate_param!(attr_name, params)
+    unless params[attr_name] =~ /tls|insecure/
+      fail Grape::Exceptions::Validation,
+        params: [@scope.full_name(attr_name)],
+        message: "Must be one of 'tls', 'insecure'"
+    end
+  end
+end
+
 # Import support APIs
 require_rel 'apis/*.rb'
 

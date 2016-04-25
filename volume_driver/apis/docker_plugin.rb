@@ -28,6 +28,7 @@ class API::DockerPlugin < Grape::API
         optional :type,         type: String,  desc: 'volume type', volume_type: true
         optional :user,         type: String,  desc: 'volume user (owner)'
         optional :otp,          type: String,  desc: 'volume one time password (OTP)'
+        optional :transport,    type: String,  desc: 'specify transport security (tls, insecure)', transport_type: true
         optional :access_token, type: String,  desc: 'API access token for user authentication'
         optional :capacity,     type: String,  desc: 'volume provisioning capacity'
         optional :iops,         type: Integer, desc: 'volume provisioning IOPS (QoS)'
