@@ -337,8 +337,8 @@ module Helpers
 
     def volume_remove(opts = {})
       return if vol_cache_enabled?(vol_name)
-      vol = volume_lookup_one
-      if bb_is_attached(vol[:name], vol[:user], volume_access_token)
+      vol_info = volume_lookup_one(true)
+      if bb_is_attached(vol_info[:name], vol_info[:user], vol_info[:scope_token])
         raise Blockbridge::VolumeInuse, "Volume cannot be removed; it is still in-use" 
       end
       if opts[:async]

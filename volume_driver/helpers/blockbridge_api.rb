@@ -79,8 +79,7 @@ module Helpers
         bb_host_attached(ref, user, user_token)
       }.compact!
       return true if attached.length > 0
-    rescue Blockbridge::NotFound
-    rescue Excon::Errors::NotFound
+    rescue Blockbridge::NotFound, Excon::Errors::NotFound
     end
   end
 end
