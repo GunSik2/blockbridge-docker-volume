@@ -51,19 +51,30 @@ module Helpers
         end
     end
 
-    def bb_lookup(vol_name, user, user_token = nil)
+    def bb_lookup_vol(vol_name, user, user_token = nil)
       vols = bbapi(user, user_token).vdisk.list(label: vol_name)
       raise Blockbridge::NotFound if vols.empty?
       vols.first
     end
 
-    def bb_remove(vol_name, user, user_token = nil)
-      disk = bb_lookup(vol_name, user, user_token)
+    def bb_remove_vol(vol_name, user, user_token = nil)
+      vol = bb_lookup_vol(vol_name, user, user_token)
       bbapi(user, user_token).objects.remove_by_xref("#{volume_ref_prefix}#{vol_name}", scope: "vdisk,xmd")
-      if bbapi(user, user_token).vdisk.list(vss_id: disk.vss_id).empty?
-        bbapi(user, user_token).vss.remove(disk.vss_id)
+      if bbapi(user, user_token).vdisk.list(vss_id: vol.vss_id).empty?
+        bbapi(user, user_token).vss.remove(vol.vss_id)
       end
     rescue Blockbridge::NotFound
+    end
+
+    def bb_lookup_user(user)
+      raise Blockbridge::Notfound if bbapi.user_profile.list(login: user).length == 0
+    end
+
+    def bb_lookup_vol_info(vol)
+      bb_lookup_user(vol[:user])
+      info = bbapi.xmd.info("docker-volume-#{vol[:name]}")
+      info[:data].merge(info[:data][:volume])
+    rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound
     end
 
     def bb_host_attached(ref, user, user_token = nil)
@@ -71,9 +82,9 @@ module Helpers
     rescue Excon::Errors::NotFound
     end
 
-    def bb_is_attached(vol_name, user, user_token = nil)
-      disk = bb_lookup(vol_name, user, user_token)
-      attached = disk.xmd_refs.select { |x| x.start_with? "host-attach" }
+    def bb_get_attached(vol_name, user, user_token = nil)
+      vol = bb_lookup_vol(vol_name, user, user_token)
+      attached = vol.xmd_refs.select { |x| x.start_with? "host-attach" }
       return unless attached.length > 0
       attached.map! { |ref|
         bb_host_attached(ref, user, user_token)
