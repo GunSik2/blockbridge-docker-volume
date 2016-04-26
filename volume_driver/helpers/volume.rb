@@ -13,6 +13,7 @@ module Helpers
             "BLOCKBRIDGE_VOLUME_NAME"    => vol_name,
             "BLOCKBRIDGE_VOLUME_REF"     => volume_ref_name,
             "BLOCKBRIDGE_CACHE_REF"      => vol_cache_ref,
+            "BLOCKBRIDGE_HOST_REF"       => vol_host_ref,
             "BLOCKBRIDGE_VOLUME_PARAMS"  => MultiJson.dump(volume_params),
             "BLOCKBRIDGE_VOLUME_TYPE"    => volume_type,
             "BLOCKBRIDGE_VOLUME_PATH"    => vol_path,
@@ -37,6 +38,10 @@ module Helpers
 
     def volume_cmd_exec(cmd)
       cmd_exec(cmd, volume_env)
+    end
+
+    def vol_host_ref(name = nil)
+      "#{volume_ref_name(name)}-hostinfo"
     end
 
     def auth_env
@@ -65,8 +70,12 @@ module Helpers
       "docker-volume-"
     end
 
-    def volume_ref_name
-      "#{volume_ref_prefix}#{vol_name}"
+    def volume_ref_name(name = nil)
+      if name
+        "#{volume_ref_prefix}#{name}"
+      else
+        "#{volume_ref_prefix}#{vol_name}"
+      end
     end
 
     def volume_user
