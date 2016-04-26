@@ -160,7 +160,6 @@ module Blockbridge
         :capacity,
         :iops,
         :attributes,
-        :transport,
         :clone_basis,
         :type,
       ]
@@ -252,7 +251,8 @@ module Blockbridge
     def volume_host_info
       vol_cache_foreach  do |v, vol|
         next unless (vol_info = volume_lookup_info(vol))
-        next unless bb_is_attached(vol[:name], vol[:user], vol_info[:scope_token])
+        next unless (xmd = bb_is_attached(vol[:name], vol[:user], vol_info[:scope_token]))
+        next unless disk_attach_host(xmd.first) == ENV['HOSTNAME']
         volume_host_info_create(vol, vol_info)
         volume_host_info_update(vol, vol_info)
       end
