@@ -89,7 +89,6 @@ GEM
     erubis (2.7.0)
     eventmachine (1.0.9.1)
     excon (0.48.0)
-    ffi (1.9.10)
     git-version-bump (0.15.1)
     goliath (1.0.4)
       async-rack
@@ -138,8 +137,6 @@ GEM
     rest-client-components (1.4.0)
       rack (>= 1.0.1)
       rest-client (>= 1.6.0)
-    sys-filesystem (1.1.4)
-      ffi
     thread_safe (0.3.5)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
@@ -169,7 +166,6 @@ DEPENDENCIES
   require_all
   rest-client
   rest-client-components
-  sys-filesystem
 
 BUNDLED WITH
    1.11.2
