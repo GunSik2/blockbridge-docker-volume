@@ -43,7 +43,6 @@ module Helpers
     def vol_cache_rm(name = vol_name)
       FileUtils.rm_rf(File.dirname(vol_cache_path(name)))
       Cache.volumes.delete(name)
-      Blockbridge::VolumeHostinfo.cache.delete(name)
     end
 
     def vol_cache_enable(name = vol_name)

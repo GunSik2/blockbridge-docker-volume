@@ -9,10 +9,6 @@ module Blockbridge
     attr_reader :logger
     attr_reader :status
 
-    def self.cache
-      @@hostinfo_cache ||= {}
-    end
-
     def initialize(address, port, config, status, logger)
       @config = config
       @logger = logger
@@ -27,13 +23,18 @@ module Blockbridge
       EM::Synchrony.run_and_add_periodic_timer(monitor_interval_s, &method(:volume_hostinfo_run))
     end
 
+    def volume_host_info_map(xmd)
+      xmd[:data][:hostinfo]
+    end
+
     def volume_host_info_lookup(vol, vol_info)
       xmd = bbapi(vol[:user], vol_info[:scope_token]).xmd.info(vol_host_ref(vol[:name])) rescue nil
-      return xmd unless xmd.nil?
+      return volume_host_info_map(xmd) unless xmd.nil?
     end
 
     def volume_host_info_create(vol, vol_info)
-      return if volume_host_info_lookup(vol, vol_info)
+      vol_host_info = volume_host_info_lookup(vol, vol_info)
+      return vol_host_info if vol_host_info
 
       params = {
         ref: vol_host_ref(vol[:name]),
@@ -46,14 +47,13 @@ module Blockbridge
               css: {
                 'min-height' => '25px',
               },
-              lines: [
-                "Not Attached.",
-              ],
+              lines: (hostinfo = volume_host_info_build(vol, vol_info)) ? hostinfo : [ "Not Attached." ],
             },
           },
         },
       }
-      bbapi(vol[:user], vol_info[:scope_token]).xmd.create(params)
+      xmd = bbapi(vol[:user], vol_info[:scope_token]).xmd.create(params)
+      volume_host_info_map(xmd)
     rescue Blockbridge::Api::ConflictError
     end
 
@@ -99,18 +99,18 @@ module Blockbridge
       ]
     end
 
-    def volume_host_info_build_volume(vol, vol_info, vol_xmd)
+    def volume_host_info_build_volume(vol, vol_info, attach_xmd)
       # top-level volume
       info = [
         "Docker volume      #{vol[:name]}",
       ]
 
       # volume attachment
-      if vol_xmd
+      if attach_xmd
         info.concat [
-          "Attached to        #{disk_attach_host(vol_xmd)}",
-          "Mode               #{disk_attach_mode_str(vol_xmd)}",
-          "Transport          #{disk_attach_transport_str(vol_xmd)}",
+          "Attached to        #{disk_attach_host(attach_xmd)}",
+          "Mode               #{disk_attach_mode_str(attach_xmd)}",
+          "Transport          #{disk_attach_transport_str(attach_xmd)}",
         ]
       else
         info.concat [
@@ -126,8 +126,8 @@ module Blockbridge
       info
     end
 
-    def volume_host_info_build_fs(vol, vol_info, vol_xmd)
-      return [] unless vol_xmd
+    def volume_host_info_build_fs(vol, vol_info, attach_xmd)
+      return [] unless attach_xmd
       info = []
       cmd = ['/bb/bin/nsexec', '/ns-mnt/mnt', 'df', '-kTh', mnt_path(vol[:name])]
       res = cmd_exec_raw(*cmd, {})
@@ -198,14 +198,13 @@ module Blockbridge
       info
     end
 
-    def volume_host_info_build(vol, vol_info, vol_xmd = nil)
+    def volume_host_info_build(vol, vol_info, vol_host_info = nil, attach_xmd = nil)
       info = []
-      info.concat volume_host_info_build_volume(vol, vol_info, vol_xmd)
-      info.concat volume_host_info_build_fs(vol, vol_info, vol_xmd)
+      info.concat volume_host_info_build_volume(vol, vol_info, attach_xmd)
+      info.concat volume_host_info_build_fs(vol, vol_info, attach_xmd)
       info.concat volume_host_info_build_docker(vol, vol_info)
 
-      return if VolumeHostinfo.cache[vol[:name]] == info
-      VolumeHostinfo.cache[vol[:name]] = info
+      return info unless (vol_host_info && vol_host_info.data.lines == info)
     end
 
     def volume_host_info_display_height(hostinfo)
@@ -215,20 +214,19 @@ module Blockbridge
     end
 
     def volume_host_info_update(vol, vol_info)
-      volume_host_info_create(vol, vol_info)
+      vol_host_info = volume_host_info_create(vol, vol_info)
       xmd = bb_get_attached(vol[:name], vol[:user], vol_info[:scope_token])
-      if xmd && (vol_xmd = xmd.first)
+      if xmd && (attach_xmd = xmd.first)
         # attached
-        return unless disk_attach_host(vol_xmd) == ENV['HOSTNAME']
+        return unless disk_attach_host(attach_xmd) == ENV['HOSTNAME']
       else
         # detached
-        xmd = volume_host_info_lookup(vol, vol_info)
-        return unless (xmd.data.hostinfo.data.host.nil? ||
-                       (xmd.data.hostinfo.data.host == ENV['HOSTNAME']))
+        return unless (vol_host_info.data.host.nil? ||
+                       (vol_host_info.data.host == ENV['HOSTNAME']))
       end
 
       # build failed ; or no update required
-      return unless (hostinfo = volume_host_info_build(vol, vol_info, vol_xmd))
+      return unless (hostinfo = volume_host_info_build(vol, vol_info, vol_host_info, attach_xmd))
 
       # push a hostinfo update
       params = {
@@ -238,7 +236,7 @@ module Blockbridge
                 { op: 'add', path: '/hostinfo/data/host',
                   value: ENV['HOSTNAME'] },
                 { op: 'add', path: '/hostinfo/data/ongoing',
-                  value: vol_xmd ? true : false },
+                  value: attach_xmd ? true : false },
                 { op: 'add', path: '/hostinfo/data/css',
                   value: { 'min-height' => "#{volume_host_info_display_height(hostinfo)}" } } ]
       }
