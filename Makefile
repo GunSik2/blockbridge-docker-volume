@@ -8,6 +8,10 @@ volume-driver:
 	docker run -e USER=$(shell id -u) --rm -v $(PWD):/usr/src/app blockbridge/volume-driver-build
 	docker build -t blockbridge/volume-driver .
 
+bundle:
+	rm -f .bundle/config
+	docker run -e USER=$(shell id -u) --rm -v $(PWD):/usr/src/app blockbridge/volume-driver-build bash -c 'bundle && bundle update blockbridge-api && bundle update heroics'
+
 nocache:
 	docker build --no-cache -t blockbridge/volume-driver .
 

@@ -120,7 +120,7 @@ module Helpers
         logger.info "#{vol_name} using volume info from options: #{h}"
         h
       elsif volume_def
-        logger.info "#{vol_name} using volume info from existing volume #{vol_name}: #{volume_def}"
+        #logger.info "#{vol_name} using volume info from existing volume #{vol_name}: #{volume_def}"
         volume_def
       elsif env_file
         logger.info "#{vol_name} using volume info from environment file #{env_file}: #{env_file_params}"

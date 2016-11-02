@@ -106,7 +106,6 @@ class API::VolumeDriver < Grape::API
   end
 
   rescue_from Blockbridge::NotFound do |e|
-    env.logger.info e.message.chomp.squeeze("\n")
     error!({ Err: e.message }, 400)
   end
 

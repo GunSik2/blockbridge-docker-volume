@@ -221,7 +221,7 @@ module Blockbridge
         return unless disk_attach_host(attach_xmd) == ENV['HOSTNAME']
       else
         # detached
-        return unless (vol_host_info.data.host.nil? ||
+        return unless (vol_host_info&.data&.host.nil? ||
                        (vol_host_info.data.host == ENV['HOSTNAME']))
       end
 

@@ -36,8 +36,8 @@ class VolumeDriver
       if (query_string = env['QUERY_STRING']) && !query_string.empty?
         full_uri += "?" + query_string
       end
-    
-      "#{env['HTTP_X_FORWARDED_FOR'] || env['REMOTE_ADDR'] || '-'} " \
+
+      "#{env['api.request.body']['Name'] || '-'} " \
       "#{env['REMOTE_USER'] || '-'} " \
       "\"#{env['REQUEST_METHOD']} #{full_uri} #{env['HTTP_VERSION']}\" " \
       "#{response.status} " \

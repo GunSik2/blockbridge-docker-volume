@@ -4,6 +4,6 @@
 
 module Blockbridge
   module VolumeDriverVersion
-    VERSION = '3.5'
+    VERSION = '3.6'
   end
 end

@@ -90,7 +90,7 @@ module Helpers
       if bbapi(user, user_token).vdisk.list(vss_id: vol.vss_id).empty?
         bbapi(user, user_token).vss.remove(vol.vss_id)
       end
-    rescue Blockbridge::NotFound
+    rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound, Blockbridge::Api::NotFoundError
     end
 
     def bb_lookup_user(user)
@@ -101,12 +101,12 @@ module Helpers
       bb_lookup_user(vol[:user])
       info = bbapi.xmd.info("docker-volume-#{vol[:name]}")
       info[:data].merge(info[:data][:volume])
-    rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound
+    rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound, Blockbridge::Api::NotFoundError
     end
 
     def bb_host_attached(ref, user, user_token = nil)
       bbapi(user, user_token).xmd.info(ref)
-    rescue Excon::Errors::NotFound
+    rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound, Blockbridge::Api::NotFoundError
     end
 
     def bb_get_attached(vol_name, user, user_token = nil)
@@ -118,7 +118,7 @@ module Helpers
       }.compact!
       return unless attached.length > 0
       attached
-    rescue Blockbridge::NotFound, Excon::Errors::NotFound
+    rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound, Blockbridge::Api::NotFoundError
     end
   end
 end
