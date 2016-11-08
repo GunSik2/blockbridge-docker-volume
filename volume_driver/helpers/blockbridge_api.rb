@@ -51,7 +51,7 @@ module Helpers
     def client_params(user, user_token, otp)
       Hash.new.tap do |p|
         p[:user] = user || ''
-        if user && user_token.nil?
+        if user && (user_token.nil? || user_token == system_access_token)
           p[:default_headers] = {
             'X-Blockbridge-SU' => user,
           }
@@ -80,7 +80,7 @@ module Helpers
 
     def bb_lookup_vol(vol_name, user, user_token = nil)
       vols = bbapi(user, user_token).vdisk.list(label: vol_name)
-      raise Blockbridge::NotFound if vols.empty?
+      raise Blockbridge::NotFound, "No volume #{vol_name} found" if vols.empty?
       vols.first
     end
 
@@ -91,6 +91,24 @@ module Helpers
         bbapi(user, user_token).vss.remove(vol.vss_id)
       end
     rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound, Blockbridge::Api::NotFoundError
+    end
+
+    def bb_lookup_s3(vol, user_token, params)
+      s3_params = {}
+      s3_params[:label] = params[:s3] if params[:s3]
+      s3s = bbapi(vol[:user], user_token).obj_store.list(s3_params)
+      raise Blockbridge::NotFound, "No S3 object store found for #{vol[:user]}" if s3s.empty?
+      if s3s.length > 1
+        raise Blockbridge::Conflict, "More than one S3 object store found; please specify one"
+      end
+      s3s.first
+    end
+
+    def bb_backup_vol(vol, user_token, params)
+      vdisk = bb_lookup_vol(vol[:name], vol[:user], user_token)
+      s3obj = bb_lookup_s3(vol, user_token, params)
+      params = { obj_store_id: s3obj.id, snapshot_id: nil, async: true }
+      bbapi(vol[:user], user_token).vdisk.backup(vdisk.id, params)
     end
 
     def bb_lookup_user(user)

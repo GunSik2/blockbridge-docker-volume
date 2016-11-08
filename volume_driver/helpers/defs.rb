@@ -80,7 +80,8 @@ module Helpers
       File.join(blockbridge_root, 'mnt', name)
     end
 
-    def vol_path(name = vol_name)
+    def vol_path(name = nil)
+      name = vol_name if name.nil?
       return "" if name.nil?
       File.join(volumes_root, name)
     end

@@ -100,6 +100,11 @@ class Command < Clamp::Command
       client.request(req).body
     end
 
+    def backup(params)
+      req = request(:put, "#{params[:name]}/backup", params)
+      client.request(req).body
+    end
+
     private
 
     def request(method, path, body)
@@ -228,11 +233,20 @@ class VolumeList < Command
   end
 end
 
+class VolumeBackup < Command
+  parameter 'NAME', 'volume name'
+  parameter '[BACKUP-NAME]', 'backup to specific object-store backup name'
+  def exec
+    volume_api.backup(name: name, backup_name: backup_name)
+  end
+end
+
 class VolumeCommand < Command
   subcommand 'create', 'create a volume', VolumeCreate
   subcommand ['remove', 'rm'], 'remove a volume', VolumeRemove
   subcommand 'info', 'show info about a volume', VolumeInfo
   subcommand ['list', 'ls'], 'show all volumes', VolumeList
+  subcommand 'backup', 'backup a volume', VolumeBackup
 end
 
 class ProfileCreate < CreateCommand

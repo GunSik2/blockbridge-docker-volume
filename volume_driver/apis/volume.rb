@@ -49,5 +49,18 @@ class API::Volume < Grape::API
         volume_remove
       end
     end
+
+    resource :backup do
+      desc 'Backup a volume'
+      params do
+        optional :backup_name, type: String, desc: 'backup name'
+      end
+      put do
+        status 204
+        synchronize do
+          volume_backup
+        end
+      end
+    end
   end
 end

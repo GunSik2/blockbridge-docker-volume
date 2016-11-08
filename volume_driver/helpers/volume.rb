@@ -349,6 +349,26 @@ module Helpers
       end
     end
 
+    def volume_freeze(vol)
+      return unless mount_needed?
+      cmd = "#{ns_exec_mnt} #{fsfreeze} --freeze #{mnt_path(vol[:name])}"
+      volume_cmd_exec(cmd)
+    end
+
+    def volume_unfreeze(vol)
+      return unless vol && mount_needed?
+      cmd = "#{ns_exec_mnt} #{fsfreeze} --unfreeze #{mnt_path(vol[:name])}"
+      volume_cmd_exec(cmd)
+    end
+
+    def volume_backup
+      vol = volume_lookup_one(true)
+      volume_freeze(vol)
+      bb_backup_vol(vol, volume_access_token, volume_params)
+    ensure
+      volume_unfreeze(vol)
+    end
+
     def volume_provision
       logger.info "#{vol_name} provisioning if needed..."
       volume_cmd_exec("bb_provision")

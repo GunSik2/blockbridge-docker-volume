@@ -70,7 +70,6 @@ module Helpers
     end
 
     def mount_needed?(name = nil)
-      return false if name.nil?
       dat = get_ref(mnt_ref_file(name))
       return true if dat && dat['ref'] > 0
       false
