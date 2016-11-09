@@ -159,10 +159,7 @@ class CreateCommand < Command
   option '--transport', 'TRANSPORT', 'requested transport (tls, insecure, etc.)' do |val|
     enum_check(val, %w(tls insecure))
   end
-  option '--clone-basis', 'CLONE-BASIS', '(autoclone) clone basis disk'
-  option '--snapshot-tag', 'SNAPSHOT-TAG', '(autoclone) clone basis disk snapshot tag'
-  option '--snapshot-interval-hours', 'SNAPSHOT-INTERVAL-HOURS', '(snappy) take snapshot every interval'
-  option '--snapshot-interval-history', 'SNAPSHOT-INTERVAL-HISTORY', '(snappy) snapshot retain count'
+  option '--from-backup', 'BACKUP', 'create disk from backup'
 
   def default_type
     'autovol' if user
@@ -178,10 +175,7 @@ class CreateCommand < Command
       h[:iops]         = iops
       h[:transport]    = transport
       h[:attributes]   = attributes.join(' ') if attributes.length > 0
-      h[:clone_basis]  = clone_basis
-      h[:snapshot_tag] = snapshot_tag
-      h[:snapshot_interval_hours] = snapshot_interval_hours
-      h[:snapshot_interval_history] = snapshot_interval_history
+      h[:from_backup]  = from_backup
     }.reject { |_, v| v.nil? }
   end
 

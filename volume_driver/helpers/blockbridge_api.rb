@@ -64,7 +64,7 @@ module Helpers
       end
     end
 
-    def bbapi(user = nil, user_token = nil, otp = nil)
+    def bbapi(user = volume_user, user_token = volume_access_token, otp = nil)
       BlockbridgeApi.client[bbapi_client_handle(user, user_token, otp)] ||=
         begin
           Blockbridge::Api::Client.defaults[:ssl_verify_peer] = false
@@ -93,22 +93,33 @@ module Helpers
     rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound, Blockbridge::Api::NotFoundError
     end
 
-    def bb_lookup_s3(vol, user_token, params)
+    def bb_lookup_s3(label, backup_id = nil)
       s3_params = {}
-      s3_params[:label] = params[:s3] if params[:s3]
-      s3s = bbapi(vol[:user], user_token).obj_store.list(s3_params)
-      raise Blockbridge::NotFound, "No S3 object store found for #{vol[:user]}" if s3s.empty?
-      if s3s.length > 1
-        raise Blockbridge::Conflict, "More than one S3 object store found; please specify one"
+      s3_params[:label] = label if label
+      s3s = bbapi.obj_store.list(s3_params)
+      raise Blockbridge::NotFound, "No S3 object store found" if s3s.empty?
+      unless backup_id
+        if s3s.length > 1
+          raise Blockbridge::Conflict, "More than one S3 object store found; please specify one"
+        end
+        s3s.first
+      else
+        s3s.each do |s3|
+          bbapi.obj_store.list_backups(s3.id, {}).each do |backup|
+            if backup[:id] == backup_id || backup[:label] == backup_id
+              return s3, backup
+            end
+          end
+        end
+        raise Blockbridge::NotFound, "Backup #{backup_id} not found in S3 object store."
       end
-      s3s.first
     end
 
-    def bb_backup_vol(vol, user_token, params)
-      vdisk = bb_lookup_vol(vol[:name], vol[:user], user_token)
-      s3obj = bb_lookup_s3(vol, user_token, params)
-      params = { obj_store_id: s3obj.id, snapshot_id: nil, async: true }
-      bbapi(vol[:user], user_token).vdisk.backup(vdisk.id, params)
+    def bb_backup_vol(vol)
+      vdisk = bb_lookup_vol(vol[:name], vol[:user], volume_access_token)
+      s3 = bb_lookup_s3(volume_params[:s3])
+      params = { obj_store_id: s3.id, label: volume_params[:backup], snapshot_id: nil, async: true }
+      bbapi.vdisk.backup(vdisk.id, params)
     end
 
     def bb_lookup_user(user)
@@ -137,6 +148,81 @@ module Helpers
       return unless attached.length > 0
       attached
     rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound, Blockbridge::Api::NotFoundError
+    end
+
+    def bb_vss_provision
+      # set provisioning query params
+      query_params = Hash.new.tap do |h|
+        if volume_params[:capacity]
+          h[:capacity] = volume_params[:capacity]
+        end
+        h[:iops] = volume_params[:iops] if volume_params[:iops]
+        h.merge(parse_tag_query(volume_params[:attributes])) if volume_params[:attributes]
+      end
+
+      # create vss params
+      vss_params = {
+        query: query_params,
+        vss: {
+          label: vol_name,
+          xref:  volume_ref_name,
+        },
+        disk: {
+          create:         true,
+          label:          vol_name,
+          xref:           volume_ref_name,
+          xmd_refs:       [ volume_ref_name ],
+          set_size_limit: false,
+          set_workload:   false,
+        },
+        xmd: {
+          create:      true,
+          ref:         volume_ref_name,
+          xref:        volume_ref_name,
+          xmd_refs:    [ vol_cache_ref, vol_hostinfo_ref ],
+          tags:        [ 'unformatted' ],
+          exists_ok:   true,
+          reservation: true,
+          publish:     true,
+          data: {
+            group: {
+              _schema:  "group",
+              _publish: false,
+              data: {
+                label: vol_name,
+              },
+            },
+            volume: volume_params,
+          },
+        },
+      }
+
+      # clone from backup
+      if volume_params[:from_backup]
+        s3, backup = bb_lookup_s3(volume_params[:s3], volume_params[:backup])
+        vss_params[:disk][:obj_store_id] = s3.id
+        vss_params[:disk][:backup_id]    = backup[:id]
+        vss_params[:query][:capacity]    = backup[:capacity]
+      end
+
+      # create the vss
+      vss = bbapi.vss.create(vss_params)
+
+      # setup scoped authorization for async remove
+      authz_params = {
+        scope: "v:o=#{vss.id} v:r=manage_targets v:r=manage_profiles v:r=remove_vss v:r=manage_internal_disks",
+        xref:  volume_ref_name,
+      }
+      authz = bbapi.authorization.create(authz_params)
+
+      # patch in the authz to the volume definition
+      xmd_params = {
+        mode: 'patch',
+        data: [ { op: 'add', path: '/volume/scope_token', value: authz.access_token } ],
+      }
+      bbapi.xmd.update(volume_ref_name, xmd_params)
+    rescue Blockbridge::Api::ExecutionError => e
+      raise Blockbridge::CommandError, e.message
     end
   end
 end

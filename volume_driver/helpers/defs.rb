@@ -135,5 +135,31 @@ module Helpers
       return if params_profile
       return 'autovol' unless ((vol_param_keys - params_opts.keys) == vol_param_keys)
     end
+
+    def params_parse_s3(str)
+      if str.include? '/'
+        split(str, '/').first
+      end
+    end
+
+    def params_obj_store
+      if params_opts[:backup_name]
+        params_parse_s3 params_opts[:backup_name]
+      elsif params_opts[:from_backup]
+        params_parse_s3 params_opts[:from_backup]
+      end
+    end
+
+    def params_parse_backup(str)
+      str.gsub(/^.*?\//, '')
+    end
+
+    def params_backup
+      if params_opts[:backup_name]
+        params_parse_backup params_opts[:backup_name]
+      elsif params_opts[:from_backup]
+        params_parse_backup params_opts[:from_backup]
+      end
+    end
   end
 end
