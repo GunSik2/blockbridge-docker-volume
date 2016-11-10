@@ -93,6 +93,30 @@ module Helpers
     rescue Excon::Errors::NotFound, Excon::Errors::Gone, Blockbridge::NotFound, Blockbridge::Api::NotFoundError
     end
 
+    def bb_lookup_backups(s3, &blk)
+      backups = []
+      bbapi.obj_store.list_backups(s3.id, {}).each do |backup|
+        backup.merge!({
+          s3:   s3.label ? s3.label : s3.id,
+          user: volume_user,
+        })
+        backups.push backup
+        blk.call backup if blk
+      end
+      backups
+    rescue => e
+      logger.info "S3 #{s3.id} list backups failed: #{e.message}"
+      []
+    end
+
+    def bb_lookup_backup(s3, backup_id)
+      bb_lookup_backups(s3) do |backup|
+        next unless backup[:id] == backup_id || backup[:label] == backup_id
+        return backup
+      end
+      nil
+    end
+
     def bb_lookup_s3(label, backup_id = nil)
       s3_params = {}
       s3_params[:label] = label if label
@@ -105,10 +129,8 @@ module Helpers
         s3s.first
       else
         s3s.each do |s3|
-          bbapi.obj_store.list_backups(s3.id, {}).each do |backup|
-            if backup[:id] == backup_id || backup[:label] == backup_id
-              return s3, backup
-            end
+          if (backup = bb_lookup_backup(s3, backup_id))
+            return s3, backup
           end
         end
         raise Blockbridge::NotFound, "Backup #{backup_id} not found in S3 object store."

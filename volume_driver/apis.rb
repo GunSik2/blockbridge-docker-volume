@@ -145,6 +145,7 @@ class API::VolumeDriver < Grape::API
 
   mount API::Volume
   mount API::Profile
+  mount API::Backup
   mount API::DockerPlugin
 
   route :any, '*path' do

@@ -90,11 +90,6 @@ class Command < Clamp::Command
       client.request(req)
     end
 
-    def info(params)
-      req = request(:get, params[:name], params)
-      client.request(req).body
-    end
-
     def list
       req = request(:get, nil, nil)
       client.request(req).body
@@ -102,6 +97,16 @@ class Command < Clamp::Command
 
     def backup(params)
       req = request(:put, "#{params[:name]}/backup", params)
+      client.request(req).body
+    end
+
+    def inspect(params)
+      req = request(:get, params[:name], params)
+      client.request(req).body
+    end
+
+    def info
+      req = request(:get, 'info', nil)
       client.request(req).body
     end
 
@@ -126,6 +131,10 @@ class Command < Clamp::Command
   # profile client
   def profile_api
     @profile_class ||= Client.new("profile")
+  end
+
+  def backup_api
+    @backup_class ||= Client.new("backup")
   end
 
   # client run
@@ -214,10 +223,10 @@ class VolumeRemove < Command
   end
 end
 
-class VolumeInfo < Command
+class VolumeInspect < Command
   option '--name', 'VOLUME', 'volume name'
   def exec
-    volume_api.info(name: name)
+    volume_api.inspect(name: name)
   end
 end
 
@@ -238,7 +247,7 @@ end
 class VolumeCommand < Command
   subcommand 'create', 'create a volume', VolumeCreate
   subcommand ['remove', 'rm'], 'remove a volume', VolumeRemove
-  subcommand 'info', 'show info about a volume', VolumeInfo
+  subcommand 'inspect', 'inspect a volume', VolumeInspect
   subcommand ['list', 'ls'], 'show all volumes', VolumeList
   subcommand 'backup', 'backup a volume', VolumeBackup
 end
@@ -265,10 +274,10 @@ class ProfileUpdate < Command
   end
 end
 
-class ProfileInfo < Command
+class ProfileInspect < Command
   option '--name', 'PROFILE', 'profile name'
   def exec
-    profile_api.info(name: name)
+    profile_api.inspect(name: name)
   end
 end
 
@@ -282,13 +291,49 @@ class ProfileCommand < Command
   subcommand 'create', 'create a profile', ProfileCreate
   subcommand 'update', 'update a profile', ProfileUpdate
   subcommand ['remove', 'rm'], 'remove a profile', ProfileRemove
-  subcommand 'info', 'show info about a profile', ProfileInfo
+  subcommand 'inspect', 'inspect a profile', ProfileInspect
   subcommand ['list', 'ls'], 'list all profiles', ProfileList
+end
+
+class BackupList < Command
+  def exec
+    backup_api.list
+  end
+end
+
+class BackupInspect < Command
+  parameter 'BACKUP', 'backup to inspect'
+
+  def exec
+    backup_api.inspect(name: backup)
+  end
+end
+
+class BackupRemove < Command
+  parameter 'BACKUP', 'backup to remove'
+
+  def exec
+    backup_api.delete(name: backup).body
+  end
+end
+
+class BackupInfo < Command
+  def exec
+    backup_api.info
+  end
+end
+
+class BackupCommand < Command
+  subcommand ['list', 'ls'], 'list backups', BackupList
+  subcommand 'inspect', 'inspect backup', BackupInspect
+  subcommand ['remove', 'rm'], 'remove backup', BackupRemove
+  subcommand 'info', 'list S3 object store info', BackupInfo
 end
 
 class VolumeControl < Command
   subcommand 'volume', 'manage volumes', VolumeCommand
   subcommand 'profile', 'manage volume profiles', ProfileCommand
+  subcommand 'backup', 'manage volume backups', BackupCommand
 end
 
 begin

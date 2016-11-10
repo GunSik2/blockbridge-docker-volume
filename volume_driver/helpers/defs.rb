@@ -137,29 +137,40 @@ module Helpers
     end
 
     def params_parse_s3(str)
+      return unless str
       if str.include? '/'
         str.split('/').first
       end
     end
 
+    def params_backup_fields
+      [
+        :backup_name,
+        :from_backup,
+        :backup,
+      ]
+    end
+
     def params_obj_store
-      if params_opts[:backup_name]
-        params_parse_s3 params_opts[:backup_name]
-      elsif params_opts[:from_backup]
-        params_parse_s3 params_opts[:from_backup]
+      return params_opts[:s3] if params_opts[:s3]
+      s3 = nil
+      params_backup_fields.each do |fld|
+        s3 = params_parse_s3 params_opts[fld]
       end
+      s3
     end
 
     def params_parse_backup(str)
+      return unless str
       str.gsub(/^.*?\//, '')
     end
 
     def params_backup
-      if params_opts[:backup_name]
-        params_parse_backup params_opts[:backup_name]
-      elsif params_opts[:from_backup]
-        params_parse_backup params_opts[:from_backup]
+      backup = nil
+      params_backup_fields.each do |fld|
+        backup = params_parse_backup params_opts[fld]
       end
+      backup
     end
   end
 end

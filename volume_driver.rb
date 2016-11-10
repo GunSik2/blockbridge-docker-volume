@@ -37,8 +37,12 @@ class VolumeDriver
         full_uri += "?" + query_string
       end
 
-      "#{env['api.request.body']['Name'] || '-'} " \
-      "#{env['REMOTE_USER'] || '-'} " \
+      str = '- '
+      if env['api.request.body']
+        name = env['api.request.body']['Name']
+        str = name.empty? ? '- ' : "#{name} "
+      end
+      str.concat "#{env['REMOTE_USER'] || '-'} " \
       "\"#{env['REQUEST_METHOD']} #{full_uri} #{env['HTTP_VERSION']}\" " \
       "#{response.status} " \
       "#{response.headers['Content-Length'] || '-'} " \
