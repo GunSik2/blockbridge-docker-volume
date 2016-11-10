@@ -138,7 +138,7 @@ module Helpers
 
     def params_parse_s3(str)
       if str.include? '/'
-        split(str, '/').first
+        str.split('/').first
       end
     end
 

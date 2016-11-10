@@ -97,7 +97,7 @@ module Helpers
       s3_params = {}
       s3_params[:label] = label if label
       s3s = bbapi.obj_store.list(s3_params)
-      raise Blockbridge::NotFound, "No S3 object store found" if s3s.empty?
+      raise Blockbridge::NotFound, "S3 object store #{label ? label.concat(' ') : ''}not found" if s3s.empty?
       unless backup_id
         if s3s.length > 1
           raise Blockbridge::Conflict, "More than one S3 object store found; please specify one"
@@ -198,7 +198,7 @@ module Helpers
       }
 
       # clone from backup
-      if volume_params[:from_backup]
+      if volume_params[:backup]
         s3, backup = bb_lookup_s3(volume_params[:s3], volume_params[:backup])
         vss_params[:disk][:obj_store_id] = s3.id
         vss_params[:disk][:backup_id]    = backup[:id]
