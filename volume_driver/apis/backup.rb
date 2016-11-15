@@ -21,6 +21,23 @@ class API::Backup < Grape::API
     end
   end
 
+  route_param :s3 do
+    route_param :backup do
+      desc 'Inspect backup'
+      get do
+        body(backup_inspect)
+      end
+
+      desc 'Delete backup'
+      delete do
+        status 204
+        synchronize do
+          backup_rm
+        end
+      end
+    end
+  end
+
   route_param :backup do
     desc 'Inspect backup'
     get do

@@ -39,7 +39,7 @@ class VolumeDriver
 
       str = '- '
       if env['api.request.body']
-        name = env['api.request.body']['Name']
+        name = env['api.request.body']['Name'].to_s
         str = name.empty? ? '- ' : "#{name} "
       end
       str.concat "#{env['REMOTE_USER'] || '-'} " \

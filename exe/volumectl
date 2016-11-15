@@ -3,6 +3,10 @@
 # Use of this source code is governed by a BSD-style license, found
 # in the LICENSE file.
 
+dev_lib = File.join(File.dirname(__FILE__), '..')
+$LOAD_PATH.unshift(dev_lib)
+$LOAD_PATH.unshift('/usr/src/app')
+
 require 'bundler/setup'
 require 'clamp'
 require 'multi_json'
@@ -11,21 +15,15 @@ require 'restclient/components'
 require 'uri'
 require 'excon'
 require 'pp'
-
-module Helpers
-  def machine?
-    !!(ENV['BLOCKBRIDGE_MACHINE_FORMAT'].to_i != 0 || ARGV.index('--machine'))
-  end
-
-  def debug?
-    !!(ENV['BLOCKBRIDGE_DEBUG'].to_i != 0 || ARGV.index('--debug'))
-  end
-
-  extend self
-end
+require 'volume_driver/cli'
 
 class Command < Clamp::Command
-  include Helpers
+  include Blockbridge::Results
+
+  def self.use(cls, opts = {})
+    include cls
+    instance_eval(&cls.send(:setup, opts))
+  end
 
   def execute
     # wrap Clamp's 'execute' method to ensure any raised exceptions include
@@ -37,7 +35,7 @@ class Command < Clamp::Command
     this_command_instance = self
 
     begin
-      self.exec
+      format_results self.exec
     rescue StandardError, Interrupt => e
       # add a command_instance attribute to whatever excetion was thrown,
       # and set it to the previously saved value of 'self'
@@ -55,6 +53,10 @@ class Command < Clamp::Command
   # global options
   option('--machine', :flag, 'format output for machines')
   option('--debug', :flag, 'enable additional debug')
+  option('--verbose', :flag, 'enable verbose output')
+  option('--debug', :flag, 'enable additional debug')
+  option(['--raw', '-R'], :flag, 'enable raw output')
+  option('--yaml', :flag, 'print yaml for raw output')
   option('--api-proto', 'PROTO', 'specify endpoint protocol', default: 'http')
   option('--api-host', 'HOST', 'specify endpoint host', default: 'localhost')
   option('--api-port', 'PORT', 'specify endpoint port', default: 27001)
@@ -68,6 +70,18 @@ class Command < Clamp::Command
 
   def default_base_url
     "#{api_proto}://#{api_host}:#{api_port}"
+  end
+
+  def machine?
+    !!(ARGV.index('--machine'))
+  end
+
+  def debug?
+    !!(ENV['BLOCKBRIDGE_DEBUG'].to_i != 0 || ARGV.index('--debug'))
+  end
+
+  def verbose?
+    !!(ENV['BLOCKBRIDGE_VERBOSE'].to_i != 0 || ARGV.index('--verbose'))
   end
 
   # client class
@@ -137,11 +151,6 @@ class Command < Clamp::Command
     @backup_class ||= Client.new("backup")
   end
 
-  # client run
-  def execute
-    format_results exec
-  end
-
   def enum_check(val, options, fmt = nil)
     unless options.index(val)
       msg = (fmt || "must be one of: %s") % options.join(', ')
@@ -150,10 +159,22 @@ class Command < Clamp::Command
     val
   end
 
-  def format_results(data)
+  def display(*args)
+    puts(*args)
+  end
+
+  def format_results(data, opts = {})
     return if data.nil? || data.empty?
     data = MultiJson.load(data) if data.is_a?(String)
-    puts MultiJson.dump(data, pretty: true)
+    if machine?
+      puts MultiJson.dump(data, pretty: true)
+    else
+      opts[:verbose] ||= verbose?
+      opts[:debug]   ||= debug?
+      opts[:cmd]       = self
+      output = render(data, opts)
+      display(output) unless output.nil? || output.empty?
+    end
   end
 end
 
@@ -336,12 +357,6 @@ class VolumeControl < Command
   subcommand 'backup', 'manage volume backups', BackupCommand
 end
 
-begin
-  VolumeControl.run
-rescue StandardError, Interrupt => e
-  if Helpers.debug?
-    STDERR.puts e.inspect, e.class, e.backtrace
-  end
-  abort(Helpers.machine? ? "#{e.class} #{e.message}" :
-          "Operation failed: #{e.message}")
+if __FILE__ == $0
+  CliMain.new(VolumeControl, ARGV.dup).execute!
 end

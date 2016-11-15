@@ -118,9 +118,18 @@ module Helpers
     end
 
     def bb_lookup_s3(label, backup_id = nil)
+      s3s = []
       s3_params = {}
-      s3_params[:label] = label if label
-      s3s = bbapi.obj_store.list(s3_params)
+      if label
+        begin
+          s3s.push bbapi.obj_store.info(label)
+        rescue Blockbridge::Api::NotFoundError, Excon::Errors::NotFound, Excon::Errors::Gone
+        end
+      end
+      if s3s.empty?
+        s3_params[:label] = label if label
+        s3s = bbapi.obj_store.list(s3_params)
+      end
       raise Blockbridge::NotFound, "S3 object store #{label ? label.concat(' ') : ''}not found" if s3s.empty?
       unless backup_id
         if s3s.length > 1

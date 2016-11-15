@@ -156,6 +156,7 @@ module Helpers
       s3 = nil
       params_backup_fields.each do |fld|
         s3 = params_parse_s3 params_opts[fld]
+        break if s3
       end
       s3
     end
@@ -169,6 +170,7 @@ module Helpers
       backup = nil
       params_backup_fields.each do |fld|
         backup = params_parse_backup params_opts[fld]
+        break if backup
       end
       backup
     end

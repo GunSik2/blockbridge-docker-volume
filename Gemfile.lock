@@ -12,6 +12,25 @@ GIT
       multi_json (~> 1.11)
 
 GIT
+  remote: /usr/lib/blockbridge-util
+  revision: e0d8102577b28546c47f0dea435ad76927d0741d
+  branch: master
+  specs:
+    blockbridge-util (1.2.0)
+      hashie (~> 3.4)
+      multi_json
+      naturally (~> 2.1)
+      paint
+      sys-filesystem (~> 1.1)
+
+GIT
+  remote: /usr/lib/clamp
+  revision: 8e459714e74cf9a7d4d1aab89125573383c5e548
+  branch: bb
+  specs:
+    clamp (1.0.0)
+
+GIT
   remote: /usr/lib/heroics
   revision: a194a4289d3ac77bbb58a15d9745cdaa000fcc97
   branch: 0.0.17-bb
@@ -62,7 +81,6 @@ GEM
       ice_nine (~> 0.11.0)
       thread_safe (~> 0.3, >= 0.3.1)
     builder (3.2.2)
-    clamp (1.1.1)
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
     concurrent-ruby (1.0.2)
@@ -88,6 +106,8 @@ GEM
     erubis (2.7.0)
     eventmachine (1.2.0.1)
     excon (0.54.0)
+    facets (3.1.0)
+    ffi (1.9.14)
     git-version-bump (0.15.1)
     goliath (1.0.4)
       async-rack
@@ -117,7 +137,9 @@ GEM
     moneta (0.8.0)
     multi_json (1.12.1)
     multi_xml (0.5.5)
+    naturally (2.1.0)
     netrc (0.11.0)
+    paint (1.0.1)
     posix-spawn (0.3.11)
     rack (1.6.4)
     rack-accept (0.4.5)
@@ -138,6 +160,8 @@ GEM
     rest-client-components (1.4.0)
       rack (>= 1.0.1)
       rest-client (>= 1.6.0)
+    sys-filesystem (1.1.7)
+      ffi
     thread_safe (0.3.5)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
@@ -155,13 +179,16 @@ PLATFORMS
 
 DEPENDENCIES
   blockbridge-api!
-  clamp
+  blockbridge-util!
+  clamp!
   docker-api!
   em-http-request
   em-synchrony
   excon (>= 0.46.0)
+  facets (~> 3.0)
   goliath
   grape!
+  hashie
   heroics!
   posix-spawn
   require_all
