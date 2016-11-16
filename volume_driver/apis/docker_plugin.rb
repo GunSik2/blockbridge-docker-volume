@@ -33,10 +33,7 @@ class API::DockerPlugin < Grape::API
         optional :capacity,     type: String,  desc: 'volume provisioning capacity'
         optional :iops,         type: Integer, desc: 'volume provisioning IOPS (QoS)'
         optional :attributes,   type: String,  desc: 'volume provisioning attributes'
-        optional :clone_basis,  type: String,  desc: '(autoclone) volume clone basis'
-        optional :snapshot_tag, type: String,  desc: '(autoclone) volume clone basis snapshot tag'
-        optional :snapshot_interval_hours, type: Integer, desc: '(snappy) take snapshot every interval'
-        optional :snapshot_interval_history, type: Integer, desc: '(snappy) snapshot retain count'
+        optional :from_backup,  type: String,  desc: 'create volume from backup'
         mutually_exclusive :profile, :type
       end
     end
