@@ -8,7 +8,6 @@ class API::Backup < Grape::API
   desc 'list backups'
   params do
     optional :profile, type: String, desc: 'list backups from S3 object store defined in profile'
-    optional :s3,      type: String, desc: 'list backups from S3 object store'
   end
   get do
     body(backup_ls)
@@ -16,6 +15,9 @@ class API::Backup < Grape::API
 
   resource :info do
     desc 'S3 Object store info'
+    params do
+      optional :profile, type: String, desc: 'list backups from S3 object store defined in profile'
+    end
     get do
       body(backup_info)
     end
@@ -24,11 +26,17 @@ class API::Backup < Grape::API
   route_param :s3 do
     route_param :backup do
       desc 'Inspect backup'
+      params do
+        optional :profile, type: String, desc: 'list backups from S3 object store defined in profile'
+      end
       get do
         body(backup_inspect)
       end
 
       desc 'Delete backup'
+      params do
+        optional :profile, type: String, desc: 'list backups from S3 object store defined in profile'
+      end
       delete do
         status 204
         synchronize do
@@ -40,11 +48,17 @@ class API::Backup < Grape::API
 
   route_param :backup do
     desc 'Inspect backup'
+    params do
+      optional :profile, type: String, desc: 'list backups from S3 object store defined in profile'
+    end
     get do
       body(backup_inspect)
     end
 
     desc 'Delete backup'
+    params do
+      optional :profile, type: String, desc: 'list backups from S3 object store defined in profile'
+    end
     delete do
       status 204
       synchronize do

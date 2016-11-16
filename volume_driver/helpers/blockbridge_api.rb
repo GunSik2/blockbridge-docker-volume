@@ -133,7 +133,7 @@ module Helpers
       raise Blockbridge::NotFound, "S3 object store #{label ? label.concat(' ') : ''}not found" if s3s.empty?
       unless backup_id
         if s3s.length > 1
-          raise Blockbridge::Conflict, "More than one S3 object store found; please specify one"
+          raise Blockbridge::Conflict, "More than one S3 object store found; please specify an S3 and/or backup name"
         end
         s3s.first
       else

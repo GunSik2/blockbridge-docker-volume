@@ -125,17 +125,10 @@ module Helpers
     end
 
     def volume_params_find
-      if env_file
-        logger.info "#{vol_name} using volume info from environment file #{env_file}: #{env_file_params}"
-        env_file_params
-      elsif volume_profile
+      if volume_profile
         profile = volume_profile.reject { |k, v| k == :name }
         logger.info "#{vol_name} using volume info from profile #{volume_profile[:name]}: #{profile}"
         profile
-      elsif env_file_default
-        env_file_default_params
-        logger.info "#{vol_name} using volume info from environment file #{env_file_default}: #{env_file_default_params}"
-        env_file_default_params
       else
         {}
       end
@@ -169,6 +162,7 @@ module Helpers
     end
 
     def volume_def
+      return if vol_name.nil?
       @volume_def ||= volume_info.first
     end
 

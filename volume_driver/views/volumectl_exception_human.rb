@@ -35,18 +35,18 @@ when RuntimeError
     end
   end
 
-when RestClient::NotFound
-  response = MultiJson.load(e.response, symbolize_keys: true) rescue nil
+when Excon::Error::NotFound
+  response = MultiJson.load(e.response.body, symbolize_keys: true) rescue nil
   if response
-    puts "ERROR: #{response[:error]}"
+    puts "ERROR: #{response[:Error]}"
   else
     puts "ERROR: Volume not found"
   end
 
-when RestClient::BadRequest
-  response = MultiJson.load(e.response, symbolize_keys: true) rescue nil
+when Excon::Error::BadRequest
+  response = MultiJson.load(e.response.body, symbolize_keys: true) rescue nil
   if response
-    puts "ERROR: #{response[:error]}"
+    puts "ERROR: #{response[:Error]}"
   else
     puts "ERROR: #{e.command_instance.invocation_path} failed with a bad request"
   end
@@ -54,10 +54,10 @@ when RestClient::BadRequest
   puts ""
   puts "See: '#{e.command_instance.invocation_path} --help'"
 
-when RestClient::Conflict
-  response = MultiJson.load(e.response, symbolize_keys: true) rescue nil
+when Excon::Error::Conflict
+  response = MultiJson.load(e.response.body,symbolize_keys: true) rescue nil
   if response
-    puts "ERROR: #{response[:error]}"
+    puts "ERROR: #{response[:Error]}"
   else
     puts "ERROR: Volume conflict."
   end

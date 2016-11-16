@@ -1,10 +1,3 @@
-##############################################################################
-# Copyright (c) 2016, Blockbridge Networks LLC.  All rights reserved.
-# Proprietary and confidential. Unauthorized copying of this file via any
-# medium is strictly prohibited. Use of this source code is subject to the
-# terms and conditions found in the LICENSE file.
-##############################################################################
-
 unless data
   header "No volume information found."
   return
@@ -12,6 +5,7 @@ end
 
 def info(vol)
   fieldset("Volume: #{vol['name']}", heading: true) do
+    field 'type', vol['type']
     field 'user', vol['user']
     field 'capacity', vol['capacity']
     if vol['backup']

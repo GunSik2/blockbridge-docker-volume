@@ -51,13 +51,18 @@ class API::Volume < Grape::API
       desc 'Backup a volume'
       params do
         optional :backup_name, type: String, desc: 'backup name'
+        optional :s3, type: String, desc: 'object store name'
       end
       put do
-        status 204
+        status 201
         synchronize do
-          volume_backup
+          body(volume_backup)
         end
       end
     end
+  end
+
+  route :any, '*path' do
+    error!({ Error: 'Volume not found' }, 404)
   end
 end
