@@ -5,8 +5,6 @@
 module Helpers
   module Backup
     def backup_ls
-      pp params_profile
-      pp volume_profile
       backups = []
       s3s = bbapi.obj_store.list
       s3s.each do |s3|
