@@ -211,7 +211,6 @@ module Helpers
           ref:         volume_ref_name,
           xref:        volume_ref_name,
           xmd_refs:    [ vol_cache_ref, vol_hostinfo_ref ],
-          tags:        [ 'unformatted' ],
           exists_ok:   true,
           reservation: true,
           publish:     true,
@@ -234,6 +233,8 @@ module Helpers
         vss_params[:disk][:obj_store_id] = s3.id
         vss_params[:disk][:backup_id]    = backup[:id]
         vss_params[:query][:capacity]    = backup[:capacity]
+      else
+        vss_params[:xmd][:tags] = [ 'unformatted' ]
       end
 
       # create the vss
