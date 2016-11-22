@@ -150,7 +150,7 @@ module Helpers
           p = volume_def || volume_params_find
           p.merge! volume_params_opts if volume_params_opts
           volume_params_augment p
-          logger.info "#{vol_name} using volume options: #{p}"
+          logger.info "#{vol_name} using volume options: #{p}" unless volume_def
           p
         end
     end

@@ -1,0 +1,58 @@
+{
+  "manifestVersion": "v0.1",
+  "description": "Blockbridge Volume Plugin",
+  "documentation": "https://github.com/blockbridge/blockbridge-docker-volume",
+  "entrypoint": ["./volume_driver.sh"],
+  "interface": {
+    "types": ["docker.volumedriver/1.0"],
+    "socket": "blockbridge/blockbridge.sock"
+  },
+  "network": {
+    "type": "host"
+  },
+  "capabilities": ["CAP_SYS_ADMIN", "CAP_MKNOD"],
+  "args": null,
+  "devices": null,
+  "mounts": [
+    {
+      "name": "volume data",
+      "description": "volume driver state",
+      "source": "/bb/volumes",
+      "destination": "/bb/volumes",
+      "type": "bind",
+      "options": ["shared", "rbind"]
+    },
+    {
+      "name": "docker socket",
+      "description": "docker socket for API access",
+      "source": "/var/run/docker.sock",
+      "destination": "/run",
+      "type": "bind",
+      "options": ["shared", "rbind"]
+    },
+    {
+      "name": "plugin sockets",
+      "description": "plugin socket for API access",
+      "source": "/var/run/docker/plugins",
+      "destination": "/run/docker/plugins",
+      "type": "bind",
+      "options": ["shared", "rbind"]
+    },
+    {
+      "name": "iscsi",
+      "description": "iscsi initiator configuration",
+      "source": "/etc/iscsi",
+      "destination": "/etc/iscsi",
+      "type": "bind",
+      "options": ["shared", "rbind"]
+    },
+    {
+      "name": "kernel modules",
+      "description": "kernel modules",
+      "source": "/lib/modules",
+      "destination": "/lib/modules",
+      "type": "bind",
+      "options": ["shared", "rbind"]
+    }
+  ]
+}

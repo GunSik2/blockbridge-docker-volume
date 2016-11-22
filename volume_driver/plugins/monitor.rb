@@ -95,6 +95,8 @@ module Blockbridge
 
     def volume_cache_monitor_run
       volume_cache_monitor
+    rescue Excon::Error => e
+      logger.error "cache monitor request failed: #{e.message.chomp.squeeze("\n")}"
     rescue => e
       msg = e.message.chomp.squeeze("\n")
       msg.each_line do |m| logger.error "cache monitor: #{m.chomp}" end

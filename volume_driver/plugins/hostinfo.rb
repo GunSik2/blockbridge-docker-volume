@@ -252,6 +252,8 @@ module Blockbridge
 
     def volume_hostinfo_run
       volume_hostinfo
+    rescue Excon::Error => e
+      logger.error "hostinfo request failed: #{e.message.chomp.squeeze("\n")}"
     rescue => e
       msg = e.message.chomp.squeeze("\n")
       msg.each_line do |m| logger.error "hostinfo: #{m.chomp}" end
