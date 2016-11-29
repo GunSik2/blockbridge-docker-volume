@@ -409,6 +409,9 @@ module Helpers
       volume_cmd_exec("bb_mkfs")
       volume_cmd_exec("bb_mount")
       logger.info "#{vol_name} mounted"
+    rescue
+      volume_unmount
+      raise
     end
 
     def volume_unmount

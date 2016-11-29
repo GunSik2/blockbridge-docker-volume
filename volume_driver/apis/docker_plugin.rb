@@ -122,4 +122,11 @@ class API::DockerPlugin < Grape::API
       body(Volumes: volume_list, Err: nil)
     end
   end
+
+  resource 'VolumeDriver.Capabilities' do
+    desc "Get driver capabilities"
+    post do
+      body(Capabilities: { "Scope" => "global" })
+    end
+  end
 end

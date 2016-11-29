@@ -125,6 +125,11 @@ class API::VolumeDriver < Grape::API
     error!({ Error: e.message }, 400)
   end
 
+  rescue_from Excon do |e|
+    env.logger.info e.message.chomp.squeeze("\n")
+    error!({ Error: e.message }, 400)
+  end
+
   rescue_from Blockbridge::VolumeInuse do |e|
     error!({ Error: e.message }, 400)
   end
