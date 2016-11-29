@@ -1,7 +1,7 @@
 {
-  "manifestVersion": "v0.1",
   "description": "Blockbridge Volume Plugin",
   "documentation": "https://github.com/blockbridge/blockbridge-docker-volume",
+  "workdir": "/usr/src/app",
   "entrypoint": ["./volume_driver.sh"],
   "interface": {
     "types": ["docker.volumedriver/1.0"],
@@ -10,9 +10,11 @@
   "network": {
     "type": "host"
   },
-  "capabilities": ["CAP_SYS_ADMIN", "CAP_MKNOD"],
   "args": null,
-  "devices": null,
+  "linux": {
+    "capabilities": ["CAP_NET_ADMIN", "CAP_SYS_ADMIN", "CAP_MKNOD"],
+    "devices": null
+  },
   "mounts": [
     {
       "name": "volume data",
@@ -23,18 +25,10 @@
       "options": ["shared", "rbind"]
     },
     {
-      "name": "docker socket",
-      "description": "docker socket for API access",
-      "source": "/var/run/docker.sock",
+      "name": "sockets directory for docker.sock",
+      "description": "run directory for sockets for API access",
+      "source": "/var/run",
       "destination": "/run",
-      "type": "bind",
-      "options": ["shared", "rbind"]
-    },
-    {
-      "name": "plugin sockets",
-      "description": "plugin socket for API access",
-      "source": "/var/run/docker/plugins",
-      "destination": "/run/docker/plugins",
       "type": "bind",
       "options": ["shared", "rbind"]
     },
@@ -53,6 +47,29 @@
       "destination": "/lib/modules",
       "type": "bind",
       "options": ["shared", "rbind"]
+    }
+  ],
+  "env": [
+    {
+      "name": "BLOCKBRIDGE_ERROR_FORMAT",
+      "description": "blockbridge cli error format",
+      "value": "machine"
+    },
+    {
+      "name": "BLOCKBRIDGE_API_HOST",
+      "description": "blockbridge api host (management node)",
+      "value": "unset",
+      "Settable": [
+        "value"
+      ]
+    },
+    {
+      "name": "BLOCKBRIDGE_API_KEY",
+      "description": "blockbridge api key",
+      "value": "unset",
+      "Settable": [
+        "value"
+      ]
     }
   ]
 }
