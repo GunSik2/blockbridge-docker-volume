@@ -67,6 +67,7 @@ class API::DockerPlugin < Grape::API
     desc "Mount a Volume"
     params do
       requires :Name, type: String, desc: "Volume Name"
+      optional :ID, type: String, desc: "Volume mount ID"
       optional :Opts, type: Hash, desc: 'Volume Options' do
         optional :otp, type: String,  desc: 'volume one time password (OTP)'
       end
@@ -95,6 +96,7 @@ class API::DockerPlugin < Grape::API
     desc "Unmount a Volume"
     params do
       requires :Name, type: String, desc: "Volume Name"
+      optional :ID, type: String, desc: "Volume mount ID"
     end
     post do
       synchronize do

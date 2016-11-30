@@ -20,6 +20,10 @@ module Helpers
       @profile_name ||= params[:profile] || params[:name]
     end
 
+    def mount_ref_id
+      @mount_ref_id ||= params[:ID]
+    end
+
     def env_name
       @env_name ||= vol_name
     end
